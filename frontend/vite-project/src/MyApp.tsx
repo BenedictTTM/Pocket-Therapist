@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import ChatApp from './People';
 import ModeratorDashboard from './Moderators';
 import { Users, Shield } from 'lucide-react';
+import LogInPage from './Sign';
+import SignUpPage from './SignUp';
 
 const Navigation = () => {
   const location = useLocation();
@@ -52,6 +54,8 @@ const App = () => {
         <Routes>
           <Route path="/" element={<ChatApp />} />
           <Route path="/moderator" element={<ModeratorDashboard />} />
+          <Route path="/sign-in" element={<LogInPage />} />
+          <Route path="/sign-up" element={<SignUpPage />} />
         </Routes>
       </div>
     </Router>

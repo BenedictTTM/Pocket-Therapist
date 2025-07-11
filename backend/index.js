@@ -3,21 +3,39 @@ const cors = require('cors');
 require('dotenv').config();
 const axios = require('axios');
 const mongoose = require('mongoose');
-const ChatMessage = require('./schema/chatMessage.ts')
+const ChatMessage = require('./schema/chatMessage.ts'); // Use .js, not .ts
+const { clerkMiddleware } = require('@clerk/express'); // Use require, not import
 
-const app = express();
+const app = express(); // Create app first
+
 app.use(cors());
 app.use(express.json());
+
 
 // Alle-AI API configuration
 const ALLEAI_API_URL = 'https://api.alle-ai.com/api/v1/chat/completions';
 const ALLEAI_API_KEY = process.env.ALLEAI_API_KEY;
 
+require('dotenv').config();
+
+// Make sure these env variables exist
+if (!process.env.CLERK_SECRET_KEY || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing Clerk environment variables");
+}
+
+app.use(
+  clerkMiddleware({
+    secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  })
+);
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, userId, conversationId } = req.body;
+    const userId = req.auth && req.auth.userId ? req.auth.userId : 'anonymous';
+    const { message, conversationId } = req.body;
     console.log('req.body:', req.body);
-    
+
     if (!message) {
       return res.status(400).json({ error: 'Message is required.' });
     }
@@ -28,7 +46,7 @@ app.post('/api/chat', async (req, res) => {
 
     // Save user message to database
     const userMessage = new ChatMessage({
-      userId: userId || 'anonymous',
+      userId,
       role: 'user',
       message: message,
       conversationId: conversationId || 'default'
@@ -70,7 +88,7 @@ app.post('/api/chat', async (req, res) => {
 
     // Save AI response to database
     const aiMessage = new ChatMessage({
-      userId: userId || 'anonymous',
+      userId,
       role: 'ai',
       message: aiReply,
       conversationId: conversationId || 'default'
@@ -334,6 +352,83 @@ app.get('/api/conversations/:userId', async (req, res) => {
     console.error('Error fetching conversations:', error);
     res.status(500).json({ 
       error: 'Failed to fetch conversations.',
+      details: error.message
+    });
+  }
+});
+
+
+// Add this route to your main server to handle user message retrieval with moderator messages
+
+// Updated route to get messages for a specific conversation (including moderator messages)
+app.get('/api/messages/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.query;
+
+    const filter = { conversationId };
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    const messages = await ChatMessage.find(filter)
+      .sort({ timestamp: 1 }) // Sort by timestamp ascending
+      .exec();
+
+    // Mark moderator messages as read by user when they fetch messages
+    await ChatMessage.updateMany(
+      { conversationId, role: 'moderator', isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.json({ messages });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch messages.',
+      details: error.message
+    });
+  }
+});
+
+// Route to check if user has unread moderator messages
+app.get('/api/unread-moderator-messages/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const unreadCount = await ChatMessage.countDocuments({
+      userId,
+      role: 'moderator',
+      isRead: false
+    });
+
+    // Get conversations with unread moderator messages
+    const unreadConversations = await ChatMessage.aggregate([
+      {
+        $match: {
+          userId,
+          role: 'moderator',
+          isRead: false
+        }
+      },
+      {
+        $group: {
+          _id: '$conversationId',
+          count: { $sum: 1 },
+          lastMessage: { $last: '$message' },
+          lastTimestamp: { $last: '$timestamp' }
+        }
+      }
+    ]);
+
+    res.json({ 
+      unreadCount,
+      unreadConversations 
+    });
+  } catch (error) {
+    console.error('Error checking unread messages:', error);
+    res.status(500).json({ 
+      error: 'Failed to check unread messages.',
       details: error.message
     });
   }

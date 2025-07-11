@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, Plus, Trash2, User, Bot } from 'lucide-react';
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 const ChatApp = () => {
   const [conversations, setConversations] = useState([]);
@@ -7,10 +8,14 @@ const ChatApp = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [userId] = useState('user-' + Math.random().toString(36).substr(2, 9));
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const messagesEndRef = useRef(null);
 
   const API_BASE_URL = 'http://localhost:5000/api';
+
+  // Get actual user ID from Clerk
+  const userId = user?.id || 'anonymous';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -21,12 +26,19 @@ const ChatApp = () => {
   }, [messages]);
 
   useEffect(() => {
-    loadConversations();
-  }, []);
+    if (userId !== 'anonymous') {
+      loadConversations();
+    }
+  }, [userId]);
 
   const loadConversations = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/conversations/${userId}`);
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/conversations/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setConversations(data.conversations || []);
     } catch (error) {
@@ -36,7 +48,12 @@ const ChatApp = () => {
 
   const loadMessages = async (conversationId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/messages/${conversationId}?userId=${userId}`);
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/messages/${conversationId}?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setMessages(data.messages || []);
     } catch (error) {
@@ -57,8 +74,12 @@ const ChatApp = () => {
 
   const deleteConversation = async (conversationId) => {
     try {
+      const token = await getToken();
       await fetch(`${API_BASE_URL}/conversations/${conversationId}?userId=${userId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
       setConversations(conversations.filter(conv => conv._id !== conversationId));
       if (currentConversationId === conversationId) {
@@ -72,7 +93,7 @@ const ChatApp = () => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || isLoading) return;
+    if (!newMessage.trim() || isLoading || userId === 'anonymous') return;
 
     const messageText = newMessage.trim();
     setNewMessage('');
@@ -87,14 +108,15 @@ const ChatApp = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           message: messageText,
-          userId,
           conversationId: currentConversationId
         })
       });
@@ -121,6 +143,24 @@ const ChatApp = () => {
       setIsLoading(false);
     }
   };
+
+  // Show sign-in prompt if user is not authenticated
+  if (userId === 'anonymous') {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Please Sign In</h2>
+          <p className="text-slate-600 mb-6">You need to be signed in to use the chat.</p>
+          <a 
+            href="/sign-in" 
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+          >
+            Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">

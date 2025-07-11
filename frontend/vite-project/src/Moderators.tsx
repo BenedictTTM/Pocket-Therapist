@@ -50,6 +50,14 @@ const ModeratorDashboard = () => {
       setConversations(data.conversations || []);
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      // Fallback to regular conversations if moderator route fails
+      try {
+        const fallbackResponse = await fetch(`${API_BASE}/conversations/all`);
+        const fallbackData = await fallbackResponse.json();
+        setConversations(fallbackData.conversations || []);
+      } catch (fallbackError) {
+        console.error('Fallback fetch also failed:', fallbackError);
+      }
     }
   };
 
@@ -95,11 +103,17 @@ const ModeratorDashboard = () => {
 
       if (response.ok) {
         setNewMessage('');
+        // Refresh messages and conversations
         await fetchMessages(selectedConversation._id);
         await fetchConversations();
+      } else {
+        const errorData = await response.json();
+        console.error('Error sending message:', errorData);
+        alert('Failed to send message: ' + (errorData.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -200,38 +214,45 @@ const ModeratorDashboard = () => {
 
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conv) => (
-            <div
-              key={conv._id}
-              onClick={() => setSelectedConversation(conv)}
-              className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                selectedConversation?._id === conv._id ? 'bg-blue-50 border-blue-200' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Chat {conv._id.slice(-6)}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(conv.priority)}`}>
-                    {conv.priority}
-                  </span>
+          {conversations.length > 0 ? (
+            conversations.map((conv) => (
+              <div
+                key={conv._id}
+                onClick={() => setSelectedConversation(conv)}
+                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                  selectedConversation?._id === conv._id ? 'bg-blue-50 border-blue-200' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      Chat {conv._id.slice(-6)}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(conv.priority || 'medium')}`}>
+                      {conv.priority || 'medium'}
+                    </span>
+                  </div>
+                  {conv.hasModeratorMessages > 0 && (
+                    <Eye className="w-4 h-4 text-blue-500" />
+                  )}
                 </div>
-                {conv.hasModeratorMessages > 0 && (
-                  <Eye className="w-4 h-4 text-blue-500" />
-                )}
+                
+                <p className="text-sm text-gray-600 truncate mb-1">
+                  {conv.lastMessage}
+                </p>
+                
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Messages: {conv.messageCount}</span>
+                  <span>{formatTime(conv.lastTimestamp)}</span>
+                </div>
               </div>
-              
-              <p className="text-sm text-gray-600 truncate mb-1">
-                {conv.lastMessage}
-              </p>
-              
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Messages: {conv.messageCount}</span>
-                <span>{formatTime(conv.lastTimestamp)}</span>
-              </div>
+            ))
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>No conversations found</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -253,7 +274,7 @@ const ModeratorDashboard = () => {
                 
                 <div className="flex items-center space-x-3">
                   <select
-                    value={selectedConversation.priority}
+                    value={selectedConversation.priority || 'medium'}
                     onChange={(e) => updatePriority(selectedConversation._id, e.target.value)}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                   >
