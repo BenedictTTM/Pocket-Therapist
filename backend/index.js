@@ -87,6 +87,205 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+
+// Add these routes to your existing Express server
+
+// Route to get all conversations for moderation (with pagination)
+app.get('/api/moderator/conversations', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, priority, search } = req.query;
+    const skip = (page - 1) * limit;
+
+    let matchCondition = {};
+    if (priority) {
+      matchCondition.priority = priority;
+    }
+
+    const pipeline = [
+      { $match: matchCondition },
+      {
+        $group: {
+          _id: '$conversationId',
+          userId: { $first: '$userId' },
+          lastMessage: { $last: '$message' },
+          lastTimestamp: { $last: '$timestamp' },
+          messageCount: { $sum: 1 },
+          unreadCount: { 
+            $sum: { 
+              $cond: [
+                { $and: [{ $eq: ['$role', 'moderator'] }, { $eq: ['$isRead', false] }] },
+                1, 0
+              ]
+            }
+          },
+          priority: { $first: '$priority' },
+          hasModeratorMessages: {
+            $sum: {
+              $cond: [{ $eq: ['$role', 'moderator'] }, 1, 0]
+            }
+          }
+        }
+      },
+      { $sort: { lastTimestamp: -1 } },
+      { $skip: skip },
+      { $limit: parseInt(limit) }
+    ];
+
+    if (search) {
+      pipeline.unshift({
+        $match: {
+          $or: [
+            { message: { $regex: search, $options: 'i' } },
+            { conversationId: { $regex: search, $options: 'i' } }
+          ]
+        }
+      });
+    }
+
+    const conversations = await ChatMessage.aggregate(pipeline);
+    
+    // Get total count for pagination
+    const totalCount = await ChatMessage.distinct('conversationId').then(ids => ids.length);
+
+    res.json({ 
+      conversations,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching conversations for moderation:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch conversations.',
+      details: error.message
+    });
+  }
+});
+
+// Route to send moderator message
+app.post('/api/moderator/message', async (req, res) => {
+  try {
+    const { message, conversationId, moderatorId } = req.body;
+    
+    if (!message || !conversationId) {
+      return res.status(400).json({ error: 'Message and conversationId are required.' });
+    }
+
+    // Get the userId from the conversation
+    const existingMessage = await ChatMessage.findOne({ conversationId });
+    if (!existingMessage) {
+      return res.status(404).json({ error: 'Conversation not found.' });
+    }
+
+    const moderatorMessage = new ChatMessage({
+      userId: existingMessage.userId,
+      role: 'moderator',
+      message: message,
+      conversationId: conversationId,
+      moderatorId: moderatorId || 'anonymous-moderator',
+      isRead: false
+    });
+
+    await moderatorMessage.save();
+    
+    res.json({ 
+      message: 'Moderator message sent successfully',
+      data: moderatorMessage
+    });
+  } catch (error) {
+    console.error('Error sending moderator message:', error);
+    res.status(500).json({ 
+      error: 'Failed to send moderator message.',
+      details: error.message
+    });
+  }
+});
+
+// Route to mark moderator messages as read
+app.put('/api/moderator/mark-read/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    
+    await ChatMessage.updateMany(
+      { conversationId, role: 'moderator', isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.json({ message: 'Messages marked as read' });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ 
+      error: 'Failed to mark messages as read.',
+      details: error.message
+    });
+  }
+});
+
+// Route to update conversation priority
+app.put('/api/moderator/priority/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { priority } = req.body;
+    
+    if (!['low', 'medium', 'high'].includes(priority)) {
+      return res.status(400).json({ error: 'Invalid priority level.' });
+    }
+
+    await ChatMessage.updateMany(
+      { conversationId },
+      { $set: { priority } }
+    );
+
+    res.json({ message: 'Priority updated successfully' });
+  } catch (error) {
+    console.error('Error updating priority:', error);
+    res.status(500).json({ 
+      error: 'Failed to update priority.',
+      details: error.message
+    });
+  }
+});
+
+// Route to get moderator statistics
+app.get('/api/moderator/stats', async (req, res) => {
+  try {
+    const totalConversations = await ChatMessage.distinct('conversationId').then(ids => ids.length);
+    const activeToday = await ChatMessage.distinct('conversationId', {
+      timestamp: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    }).then(ids => ids.length);
+    
+    const priorityStats = await ChatMessage.aggregate([
+      {
+        $group: {
+          _id: '$conversationId',
+          priority: { $first: '$priority' }
+        }
+      },
+      {
+        $group: {
+          _id: '$priority',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      totalConversations,
+      activeToday,
+      priorityStats
+    });
+  } catch (error) {
+    console.error('Error fetching moderator stats:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch stats.',
+      details: error.message
+    });
+  }
+});
+
 // Route to get messages for a specific conversation
 app.get('/api/messages/:conversationId', async (req, res) => {
   try {
