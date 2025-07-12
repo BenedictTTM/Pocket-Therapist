@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeaderProps';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import { ScrollArea } from "@/Components/ui/scroll-area";
 
 interface ChatAreaProps {
   selectedConversation: any;
@@ -31,30 +32,47 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [messages]);
 
   return (
-    <div className="flex-1 flex flex-col">
-      <ChatHeader
-        selectedConversation={selectedConversation}
-        updatePriority={updatePriority}
-      />
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg._id}
-            message={msg}
-            formatTime={formatTime}
-          />
-        ))}
-        <div ref={messagesEndRef} />
+    <div className="flex-1 flex flex-col h-screen">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0">
+        <ChatHeader
+          selectedConversation={selectedConversation}
+          updatePriority={updatePriority}
+        />
       </div>
 
-      <MessageInput
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        sendMessage={sendMessage}
-        loading={loading}
-      />
+      {/* Scrollable Messages */}
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div className="p-4 space-y-2">
+            {messages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <MessageBubble
+                  key={msg._id}
+                  message={msg}
+                  formatTime={formatTime}
+                />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Fixed Compact Input */}
+      <div className="flex-shrink-0">
+        <MessageInput
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          sendMessage={sendMessage}
+          loading={loading}
+          selectedConversation={selectedConversation}
+        />
+      </div>
     </div>
   );
 };

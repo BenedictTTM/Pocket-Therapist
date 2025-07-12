@@ -2,7 +2,6 @@ import React from 'react';
 import { MessageCircle, Search } from 'lucide-react';
 import ConversationItem from './ConversationItem';
 import { ScrollArea } from "@/Components/ui/scroll-area";
-import { Card, CardContent } from "@/Components/ui/card";
 
 interface Conversation {
   _id: string;
@@ -34,10 +33,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center space-y-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Loading conversations...</p>
+      <div className="h-full flex items-center justify-center p-4">
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+          <p className="text-xs text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -45,39 +44,33 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   if (conversations.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-sm mx-auto">
-          <CardContent className="p-6 text-center space-y-4">
-            {searchTerm ? (
-              <>
-                <Search className="w-12 h-12 mx-auto text-muted-foreground/50" />
-                <div>
-                  <h3 className="font-medium text-muted-foreground">No results found</h3>
-                  <p className="text-sm text-muted-foreground/75 mt-1">
-                    Try adjusting your search or filters
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/50" />
-                <div>
-                  <h3 className="font-medium text-muted-foreground">No conversations yet</h3>
-                  <p className="text-sm text-muted-foreground/75 mt-1">
-                    Conversations will appear here when users start chatting
-                  </p>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <div className="h-full flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          {searchTerm ? (
+            <>
+              <Search className="w-8 h-8 mx-auto text-muted-foreground/50" />
+              <div>
+                <h4 className="font-medium text-sm">No results</h4>
+                <p className="text-xs text-muted-foreground">Try different search terms</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <MessageCircle className="w-8 h-8 mx-auto text-muted-foreground/50" />
+              <div>
+                <h4 className="font-medium text-sm">No conversations</h4>
+                <p className="text-xs text-muted-foreground">Conversations will appear here</p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="space-y-0">
+    <ScrollArea className="h-full">
+      <div>
         {conversations.map((conv) => (
           <ConversationItem
             key={conv._id}
