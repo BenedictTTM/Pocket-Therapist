@@ -33,16 +33,16 @@ const ConversationFilters: React.FC<ConversationFiltersProps> = ({
   const hasActiveFilters = searchTerm || priorityFilter;
 
   return (
-    <div className="p-4 border-b bg-muted/30 space-y-3">
+    <div className="p-4 border-b bg-gray-800 border-amber-500 space-y-3">
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-300 w-4 h-4" />
         <Input
           type="text"
           placeholder="Search conversations..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 bg-gray-700 border-amber-500 text-amber-200 placeholder-amber-400 focus:ring-amber-500"
         />
         {searchTerm && (
           <Button
@@ -59,16 +59,16 @@ const ConversationFilters: React.FC<ConversationFiltersProps> = ({
       {/* Filters Row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-muted-foreground" />
+          <Filter className="w-4 h-4 text-amber-300" />
           <Select value={priorityFilter || undefined} onValueChange={(value) => setPriorityFilter(value || "")}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All Priorities" />
+            <SelectTrigger className="w-[160px] bg-gray-700 border-amber-500 text-amber-200 hover:bg-gray-600">
+              <SelectValue placeholder="All Priorities" className="text-amber-200" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="high">High Priority</SelectItem>
-              <SelectItem value="medium">Medium Priority</SelectItem>
-              <SelectItem value="low">Low Priority</SelectItem>
+            <SelectContent className="bg-gray-800 border-amber-500">
+              <SelectItem value="all" className="text-amber-200 hover:bg-gray-700 focus:bg-gray-700">All Priorities</SelectItem>
+              <SelectItem value="high" className="text-amber-200 hover:bg-gray-700 focus:bg-gray-700">High Priority</SelectItem>
+              <SelectItem value="medium" className="text-amber-200 hover:bg-gray-700 focus:bg-gray-700">Medium Priority</SelectItem>
+              <SelectItem value="low" className="text-amber-200 hover:bg-gray-700 focus:bg-gray-700">Low Priority</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -79,7 +79,7 @@ const ConversationFilters: React.FC<ConversationFiltersProps> = ({
             variant="outline"
             size="sm"
             onClick={clearFilters}
-            className="text-xs"
+            className="text-xs bg-amber-500 text-black border-amber-400 hover:bg-amber-400"
           >
             Clear All
           </Button>
@@ -90,19 +90,19 @@ const ConversationFilters: React.FC<ConversationFiltersProps> = ({
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2">
           {searchTerm && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 bg-amber-500 text-black border-amber-400">
               Search: "{searchTerm}"
               <X 
-                className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                className="w-3 h-3 cursor-pointer hover:text-red-600" 
                 onClick={clearSearch}
               />
             </Badge>
           )}
           {priorityFilter && priorityFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 bg-amber-500 text-black border-amber-400">
               Priority: {priorityFilter}
               <X 
-                className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                className="w-3 h-3 cursor-pointer hover:text-red-600" 
                 onClick={() => setPriorityFilter('')}
               />
             </Badge>

@@ -19,30 +19,30 @@ interface ChatHeaderProps {
 const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedConversation, updatePriority }) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'high': return 'text-red-600 bg-red-100 border-red-300';
+      case 'medium': return 'text-amber-600 bg-amber-100 border-amber-300';
+      case 'low': return 'text-green-600 bg-green-100 border-green-300';
+      default: return 'text-black bg-amber-100 border-amber-300';
     }
   };
 
   return (
-    <Card className="rounded-none border-l-0 border-r-0 border-t-0 shadow-sm">
+    <Card className="rounded-none border-l-0 border-r-0 border-t-0 shadow-sm bg-white border-amber-500">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary/10 rounded-full">
-                <User className="w-5 h-5 text-primary" />
+              <div className="p-2 bg-amber-100 rounded-full">
+                <User className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold flex items-center gap-2">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-black">
                   Chat {selectedConversation._id.slice(-6)}
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
                     ID: {selectedConversation._id.slice(-8)}
                   </Badge>
                 </h2>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <User className="w-3 h-3" />
                     <span>User: {selectedConversation.userId}</span>
@@ -62,7 +62,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedConversation, updatePri
           
           <div className="flex items-center space-x-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Priority:</span>
+              <span className="text-sm font-medium text-gray-600">Priority:</span>
               <Select
                 value={selectedConversation.priority || 'medium'}
                 onValueChange={(value) => updatePriority(selectedConversation._id, value)}

@@ -15,17 +15,17 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onClearFilters 
 }) => {
   return (
-    <div className="flex-1 flex items-center justify-center bg-muted/20 p-8">
-      <Card className="w-full max-w-md">
+    <div className="flex-1 flex items-center justify-center bg-white p-8">
+      <Card className="w-full max-w-md bg-white border-amber-500 shadow-lg">
         <CardContent className="p-8 text-center space-y-6">
           {isFiltered ? (
             <>
-              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-muted rounded-full">
-                <Search className="w-8 h-8 text-muted-foreground" />
+              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-amber-100 rounded-full">
+                <Search className="w-8 h-8 text-amber-600" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">No conversations found</h3>
-                <p className="text-muted-foreground">
+                <h3 className="text-lg font-semibold text-black">No conversations found</h3>
+                <p className="text-gray-600">
                   No conversations match your current filters. Try adjusting your search criteria.
                 </p>
               </div>
@@ -38,16 +38,16 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             </>
           ) : hasConversations ? (
             <>
-              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-primary/10 rounded-full">
-                <MessageCircle className="w-8 h-8 text-primary" />
+              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-amber-100 rounded-full">
+                <MessageCircle className="w-8 h-8 text-amber-600" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Select a conversation</h3>
-                <p className="text-muted-foreground">
+                <h3 className="text-lg font-semibold text-black">Select a conversation</h3>
+                <p className="text-gray-600">
                   Choose a chat from the sidebar to start moderating and helping users.
                 </p>
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                 <ArrowLeft className="w-4 h-4" />
                 <span>Browse conversations on the left</span>
               </div>

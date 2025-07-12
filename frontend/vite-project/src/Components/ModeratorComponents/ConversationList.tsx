@@ -35,8 +35,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
     return (
       <div className="h-full flex items-center justify-center p-4">
         <div className="text-center space-y-2">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-          <p className="text-xs text-muted-foreground">Loading...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400 mx-auto"></div>
+          <p className="text-xs text-amber-200">Loading...</p>
         </div>
       </div>
     );

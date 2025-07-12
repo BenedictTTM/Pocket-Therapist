@@ -36,23 +36,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   unreadCount = 0,
 }) => {
   return (
-    <div className="w-1/3 bg-background border-r flex flex-col h-screen">
+    <div className="w-1/3 bg-gray-900 border-r border-amber-500 flex flex-col h-screen shadow-lg">
       {/* Fixed Header - Compact */}
       <div className="flex-shrink-0">
-        <Card className="rounded-none border-l-0 border-r-0 border-t-0">
+        <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-500">
           <CardHeader className="pb-2 pt-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Moderator</CardTitle>
+              <CardTitle className="text-lg text-amber-300">Moderator</CardTitle>
               <div className="flex items-center gap-1">
                 {unreadCount > 0 && (
                   <Badge variant="destructive" className="h-5 min-w-[20px] text-xs">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-300 hover:text-amber-200 hover:bg-gray-700">
                   <Bell className="w-3.5 h-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-300 hover:text-amber-200 hover:bg-gray-700">
                   <Settings className="w-3.5 h-3.5" />
                 </Button>
               </div>

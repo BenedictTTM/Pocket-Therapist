@@ -1,17 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, Plus, Trash2, User, Bot } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Send, MessageCircle, Plus, Trash2, User, Bot, Settings, Search } from 'lucide-react';
 import { useAuth, useUser } from "@clerk/clerk-react";
-import LandingPage from './Components/landingPage'
+import LandingPage from './Components/landingPage';
+import { Card, CardHeader, CardContent, CardTitle } from "./Components/ui/card";
+import { Badge } from "./Components/ui/badge";
+import { Button } from "./Components/ui/button";
+import { ScrollArea } from "./Components/ui/scroll-area";
+import { Separator } from "./Components/ui/separator";
+
+interface Conversation {
+  _id: string;
+  lastMessage?: string;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
+interface Message {
+  role: 'user' | 'ai';
+  message: string;
+  timestamp: Date;
+}
 
 const ChatApp = () => {
-  const [conversations, setConversations] = useState([]);
-  const [currentConversationId, setCurrentConversationId] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { getToken } = useAuth();
   const { user } = useUser();
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -26,13 +45,7 @@ const ChatApp = () => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (userId !== 'anonymous') {
-      loadConversations();
-    }
-  }, [userId]);
-
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     try {
       const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/conversations/${userId}`, {
@@ -45,9 +58,15 @@ const ChatApp = () => {
     } catch (error) {
       console.error('Error loading conversations:', error);
     }
-  };
+  }, [getToken, userId]);
 
-  const loadMessages = async (conversationId) => {
+  useEffect(() => {
+    if (userId !== 'anonymous') {
+      loadConversations();
+    }
+  }, [userId, loadConversations]);
+
+  const loadMessages = async (conversationId: string) => {
     try {
       const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/messages/${conversationId}?userId=${userId}`, {
@@ -68,12 +87,12 @@ const ChatApp = () => {
     setMessages([]);
   };
 
-  const selectConversation = (conversationId) => {
+  const selectConversation = (conversationId: string) => {
     setCurrentConversationId(conversationId);
     loadMessages(conversationId);
   };
 
-  const deleteConversation = async (conversationId) => {
+  const deleteConversation = async (conversationId: string) => {
     try {
       const token = await getToken();
       await fetch(`${API_BASE_URL}/conversations/${conversationId}?userId=${userId}`, {
@@ -92,7 +111,7 @@ const ChatApp = () => {
     }
   };
 
-  const sendMessage = async (e) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || isLoading || userId === 'anonymous') return;
 
@@ -101,7 +120,7 @@ const ChatApp = () => {
     setIsLoading(true);
 
     // Add user message to UI immediately
-    const userMessage = {
+    const userMessage: Message = {
       role: 'user',
       message: messageText,
       timestamp: new Date()
@@ -126,7 +145,7 @@ const ChatApp = () => {
 
       if (response.ok) {
         // Add AI response to UI
-        const aiMessage = {
+        const aiMessage: Message = {
           role: 'ai',
           message: data.reply,
           timestamp: new Date()
@@ -163,188 +182,293 @@ const ChatApp = () => {
     );
   }
 
+  // Filter conversations based on search term
+  const filteredConversations = conversations.filter(conv => 
+    conv.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv._id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Sidebar */}
-      <div className="w-80 bg-white shadow-lg border-r border-slate-200 flex flex-col">
-        <div className="p-4 border-b border-slate-200">
-          <button
-            onClick={createNewConversation}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
-          >
-            <Plus size={20} />
-            New Conversation
-          </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">Conversations</h3>
-          {conversations.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">No conversations yet. Start a new one!</p>
-          ) : (
-            <div className="space-y-2">
-              {conversations.map((conv) => (
-                <div
-                  key={conv._id}
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group hover:shadow-md ${
-                    currentConversationId === conv._id
-                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
-                      : 'bg-slate-50 hover:bg-slate-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div
-                      onClick={() => selectConversation(conv._id)}
-                      className="flex-1 min-w-0"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <MessageCircle size={16} className="text-slate-500" />
-                        <span className="text-sm font-medium text-slate-700">
-                          {conv._id.split('-')[1] || 'Chat'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-500 truncate">
-                        {conv.lastMessage || 'No messages yet'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteConversation(conv._id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 transition-all duration-200"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+    <div className="flex h-screen bg-gray-100">
+      {/* Enhanced Sidebar */}
+      <div className="w-1/3 bg-gray-900 border-r border-amber-500 flex flex-col h-screen shadow-xl">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0">
+          <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-500">
+            <CardHeader className="pb-3 pt-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl text-amber-300 font-bold">Your Chats</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-amber-500/10 border-amber-500 text-amber-300">
+                    {conversations.length} chats
+                  </Badge>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-300 hover:text-amber-200 hover:bg-gray-700">
+                    <Settings className="w-4 h-4" />
+                  </Button>
                 </div>
-              ))}
+              </div>
+              
+              {/* New Conversation Button */}
+              <Button
+                onClick={createNewConversation}
+                className="w-full bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold py-6 rounded-xl"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Conversation
+              </Button>
+            </CardHeader>
+            
+            <CardContent className="pt-0 pb-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-300" />
+                <input
+                  type="text"
+                  placeholder="Search conversations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-amber-500 text-amber-100 placeholder-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Separator className="bg-amber-500/30" />
+
+        {/* Scrollable Conversation List */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {filteredConversations.length === 0 ? (
+                <div className="text-center py-12">
+                  <MessageCircle className="w-12 h-12 text-amber-300 mx-auto mb-4 opacity-50" />
+                  <p className="text-amber-300 text-sm">
+                    {searchTerm ? 'No conversations match your search' : 'No conversations yet'}
+                  </p>
+                  <p className="text-amber-200 text-xs mt-1">
+                    {searchTerm ? 'Try a different search term' : 'Start a new conversation to begin!'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredConversations.map((conv) => (
+                    <Card
+                      key={conv._id}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                        currentConversationId === conv._id
+                          ? 'bg-amber-500 border-amber-400 shadow-lg scale-[1.02]'
+                          : 'bg-gray-800 hover:bg-gray-700 border-gray-600 hover:border-amber-500'
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div
+                            onClick={() => selectConversation(conv._id)}
+                            className="flex-1 min-w-0"
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                currentConversationId === conv._id ? 'bg-black' : 'bg-amber-500'
+                              }`}>
+                                <MessageCircle className={`w-5 h-5 ${
+                                  currentConversationId === conv._id ? 'text-amber-400' : 'text-black'
+                                }`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className={`font-semibold text-sm ${
+                                  currentConversationId === conv._id ? 'text-black' : 'text-amber-300'
+                                }`}>
+                                  Chat {conv._id.split('-')[1] || 'Session'}
+                                </h3>
+                                <p className={`text-xs ${
+                                  currentConversationId === conv._id ? 'text-gray-700' : 'text-amber-200'
+                                }`}>
+                                  {(conv.updatedAt || conv.createdAt)
+                                    ? new Date(conv.updatedAt || conv.createdAt).toLocaleDateString()
+                                    : 'Recent'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            <p className={`text-sm truncate ${
+                              currentConversationId === conv._id ? 'text-gray-700' : 'text-amber-100'
+                            }`}>
+                              {conv.lastMessage || 'No messages yet'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(conv._id);
+                            }}
+                            className={`h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 ${
+                              currentConversationId === conv._id 
+                                ? 'hover:bg-red-600 text-red-700 hover:text-red-100' 
+                                : 'hover:bg-red-600 text-red-400 hover:text-red-100'
+                            }`}
+                            title="Delete conversation"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </ScrollArea>
         </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Enhanced Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-white">
         {currentConversationId ? (
           <>
-            {/* Chat Header */}
-            <div className="bg-white shadow-sm border-b border-slate-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <MessageCircle size={16} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-800">
-                    Chat {currentConversationId.split('-')[1] || ''}
-                  </h2>
-                  <p className="text-sm text-slate-500">Powered by AlleAI</p>
-                </div>
-              </div>
+            {/* Enhanced Chat Header */}
+            <div className="flex-shrink-0">
+              <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-500 shadow-sm">
+                <CardHeader className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                        <Bot className="w-6 h-6 text-black" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-amber-300">
+                          Chat {currentConversationId.split('-')[1] || ''}
+                        </CardTitle>
+                        <p className="text-sm text-amber-200">Powered by AlleAI • Online</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="bg-green-500/10 border-green-500 text-green-400">
+                      Active
+                    </Badge>
+                  </div>
+                </CardHeader>
+              </Card>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-4xl mx-auto space-y-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex gap-3 ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    {message.role === 'ai' && (
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Bot size={16} className="text-white" />
-                      </div>
-                    )}
+            {/* Enhanced Messages Area */}
+            <div className="flex-1 min-h-0 bg-gradient-to-b from-gray-50 to-white">
+              <ScrollArea className="h-full">
+                <div className="p-6 max-w-4xl mx-auto space-y-6">
+                  {messages.map((message, index) => (
                     <div
-                      className={`max-w-lg px-4 py-3 rounded-2xl shadow-sm ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                          : 'bg-white text-slate-800 border border-slate-200'
+                      key={index}
+                      className={`flex gap-4 ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
                       }`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.message}
-                      </p>
-                      <p className={`text-xs mt-2 ${
-                        message.role === 'user' ? 'text-blue-100' : 'text-slate-500'
-                      }`}>
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    {message.role === 'user' && (
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User size={16} className="text-white" />
+                      {message.role === 'ai' && (
+                        <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <Bot className="w-5 h-5 text-black" />
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-lg px-5 py-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+                          message.role === 'user'
+                            ? 'bg-black text-amber-300 border border-amber-500'
+                            : 'bg-amber-500 text-black border border-amber-600'
+                        }`}
+                      >
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                          {message.message}
+                        </p>
+                        <p className={`text-xs mt-3 ${
+                          message.role === 'user' ? 'text-amber-200' : 'text-gray-700'
+                        }`}>
+                          {new Date(message.timestamp).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                      <Bot size={16} className="text-white" />
+                      {message.role === 'user' && (
+                        <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 shadow-lg">
+                          <User className="w-5 h-5 text-amber-400" />
+                        </div>
+                      )}
                     </div>
-                    <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-200">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start gap-4">
+                      <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                        <Bot className="w-5 h-5 text-black" />
+                      </div>
+                      <div className="bg-amber-500 px-5 py-4 rounded-2xl shadow-lg border border-amber-600">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-black rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                          <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
             </div>
 
-            {/* Message Input */}
-            <div className="bg-white border-t border-slate-200 p-4">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
-                    disabled={isLoading}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage(e);
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={isLoading || !newMessage.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
-                  >
-                    <Send size={20} />
-                  </button>
-                </div>
-              </div>
+            {/* Enhanced Message Input */}
+            <div className="flex-shrink-0">
+              <Card className="rounded-none border-l-0 border-r-0 border-b-0 bg-gray-800 border-amber-500">
+                <CardContent className="p-6">
+                  <form onSubmit={sendMessage} className="max-w-4xl mx-auto">
+                    <div className="flex gap-4 items-end">
+                      <div className="flex-1">
+                        <textarea
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type your message..."
+                          rows={1}
+                          className="w-full px-4 py-3 border-2 border-amber-500 bg-white text-black placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition-all duration-200 resize-none shadow-lg min-h-[48px] max-h-[120px]"
+                          disabled={isLoading}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              sendMessage(e);
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isLoading || !newMessage.trim()}
+                        className="px-6 py-3 bg-amber-500 text-black rounded-xl hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl font-semibold min-h-[48px]"
+                        title="Send message"
+                      >
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageCircle size={32} className="text-white" />
-              </div>
-          
-              <p className="text-slate-500 mb-6">
-                Start a new conversation or select an existing one to begin chatting
-              </p>
-              <button
-                onClick={createNewConversation}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                Start New Chat
-              </button>
-            </div>
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+            <Card className="max-w-md mx-auto bg-white shadow-2xl border-amber-500">
+              <CardContent className="p-8 text-center">
+                <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <MessageCircle className="w-10 h-10 text-black" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to Your Chat</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Start a new conversation or select an existing one to begin chatting with our AI assistant
+                </p>
+                <Button
+                  onClick={createNewConversation}
+                  className="bg-amber-500 text-black px-8 py-3 rounded-xl hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Start New Chat
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

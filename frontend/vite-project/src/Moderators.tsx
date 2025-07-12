@@ -148,7 +148,7 @@ const ModeratorDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-white">
       <Sidebar
         stats={stats}
         searchTerm={searchTerm}

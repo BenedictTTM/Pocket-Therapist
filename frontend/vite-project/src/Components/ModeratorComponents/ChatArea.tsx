@@ -32,7 +32,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [messages]);
 
   return (
-    <div className="flex-1 flex flex-col h-screen">
+    <div className="flex-1 flex flex-col h-screen bg-white">
       {/* Fixed Header */}
       <div className="flex-shrink-0">
         <ChatHeader
@@ -46,7 +46,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         <ScrollArea className="h-full">
           <div className="p-4 space-y-2">
             {messages.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-gray-600">
                 <p className="text-sm">No messages yet. Start the conversation!</p>
               </div>
             ) : (

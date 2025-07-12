@@ -43,7 +43,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     
         <button
           onClick={handleButtonClick}
-          className="bg-gradient-to-r from-amber-300 to-amber-400  px-12 py-4 rounded-xl hover:amber-400 hover:to-amber-500 transition-all duration-300 shadow-xs animate-bounce  shadow-amber-300 hover:shadow-amber-500/25 transform border-2  hover:scale-103 text-md font-medium text-black"
+          className="bg-amber-500 px-12 py-4 rounded-xl hover:bg-amber-400 transition-all duration-300 shadow-lg animate-bounce border-2 border-black hover:scale-105 text-lg font-bold text-black"
         >
           {buttonText}
         </button>
