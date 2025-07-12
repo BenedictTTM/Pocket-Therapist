@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, Plus, Trash2, User, Bot } from 'lucide-react';
 import { useAuth, useUser } from "@clerk/clerk-react";
+import LandingPage from './Components/landingPage'
 
 const ChatApp = () => {
   const [conversations, setConversations] = useState([]);
@@ -144,21 +145,21 @@ const ChatApp = () => {
     }
   };
 
+  // Handle sign-in redirect
+  const handleSignIn = () => {
+    window.location.href = '/sign-in';
+  };
+
   // Show sign-in prompt if user is not authenticated
   if (userId === 'anonymous') {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Please Sign In</h2>
-          <p className="text-slate-600 mb-6">You need to be signed in to use the chat.</p>
-          <a 
-            href="/sign-in" 
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
-          >
-            Sign In
-          </a>
-        </div>
-      </div>
+      <LandingPage 
+        showSignInPrompt={true}
+        description="You need to be signed in to use the chat."
+        buttonText="Lets Talk"
+        buttonHref="/sign-in"
+        onButtonClick={handleSignIn}
+      />
     );
   }
 
@@ -333,9 +334,7 @@ const ChatApp = () => {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle size={32} className="text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                Welcome to AlleAI Chat
-              </h3>
+          
               <p className="text-slate-500 mb-6">
                 Start a new conversation or select an existing one to begin chatting
               </p>
