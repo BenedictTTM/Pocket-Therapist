@@ -10,6 +10,8 @@
     "start": "nodemon index.js"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
+    "@clerk/express": "^1.7.5",
     "alle-ai-sdk": "^2.0.0",
     "axios": "^1.10.0",
     "cors": "^2.8.5",
