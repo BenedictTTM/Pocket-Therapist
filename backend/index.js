@@ -96,14 +96,17 @@ app.post('/api/chat', async (req, res) => {
       }
     });
 
-    // Extract the AI's reply
-    const aiReply = response?.data?.responses?.responses?.['gpt-4o']?.message?.content;
-    if (!aiReply) {
+    // Extract the AI's reply with better fallback handling
+    let aiReply = response?.data?.responses?.responses?.['gpt-4o']?.message?.content;
+    
+    // Check if aiReply is empty, null, undefined, or just whitespace
+    if (!aiReply || aiReply.trim().length === 0) {
+      console.log('No valid AI response received, using fallback message');
       console.log('Full response:', JSON.stringify(response.data, null, 2));
-      return res.status(500).json({ error: 'No response from AI.' });
+      aiReply = "Let me connect you with someone";
     }
 
-    // Save AI response to database
+    // Save AI response to database (use fallback message if needed)
     const aiMessage = new ChatMessage({
       userId,
       role: 'ai',
@@ -118,9 +121,24 @@ app.post('/api/chat', async (req, res) => {
     });
   } catch (error) {
     console.error('Error from AlleAI:', error.response?.data || error.message);
-    res.status(500).json({ 
-      error: 'Failed to get response from AI.',
-      details: error.response?.data?.error || error.message
+    
+    // If there's an error, also save a fallback message and return it
+    try {
+      const fallbackMessage = new ChatMessage({
+        userId: req.auth && req.auth.userId ? req.auth.userId : 'anonymous',
+        role: 'ai',
+        message: "Let me connect you with someone",
+        conversationId: req.body.conversationId || `conv_${req.auth?.userId || 'anonymous'}_${Date.now()}`
+      });
+      await fallbackMessage.save();
+    } catch (saveError) {
+      console.error('Error saving fallback message:', saveError);
+    }
+    
+    // Return fallback message instead of error to user
+    res.json({ 
+      reply: "Let me connect you with someone",
+      conversationId: req.body.conversationId || `conv_${req.auth?.userId || 'anonymous'}_${Date.now()}`
     });
   }
 });
@@ -715,7 +733,7 @@ app.post('/api/moderator/message', async (req, res) => {
   }
 });
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ts', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tsy', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {

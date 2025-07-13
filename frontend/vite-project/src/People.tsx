@@ -111,6 +111,12 @@ const ChatApp = () => {
     }
   };
 
+  const deleteCurrentChat = () => {
+    if (currentConversationId && window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+      deleteConversation(currentConversationId);
+    }
+  };
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || isLoading || userId === 'anonymous') return;
@@ -191,98 +197,98 @@ const ChatApp = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Enhanced Sidebar */}
-      <div className="w-1/3 bg-gray-900 border-r border-amber-500 flex flex-col h-screen shadow-xl">
-        {/* Fixed Header */}
+      <div className="w-1/3 bg-gray-900 border-r border-amber-300 flex flex-col h-screen shadow-xl">
+        {/* Fixed Header - Compact */}
         <div className="flex-shrink-0">
-          <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-500">
-            <CardHeader className="pb-3 pt-4">
+          <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-300">
+            <CardHeader className="pb-2 pt-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl text-amber-300 font-bold">Your Chats</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-amber-500/10 border-amber-500 text-amber-300">
-                    {conversations.length} chats
+                <CardTitle className="text-lg text-white font-bold">Your Chats</CardTitle>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="bg-amber-300/10 border-amber-300 text-amber-300 h-5 text-xs">
+                    {conversations.length}
                   </Badge>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-300 hover:text-amber-200 hover:bg-gray-700">
-                    <Settings className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-300 hover:text-amber-400 hover:bg-gray-700">
+                    <Settings className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
               
-              {/* New Conversation Button */}
+              {/* New Conversation Button - Compact */}
               <Button
                 onClick={createNewConversation}
-                className="w-full bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold py-6 rounded-xl"
+                className="w-full bg-amber-300 text-black hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold py-4 rounded-lg mt-2"
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
                 New Conversation
               </Button>
             </CardHeader>
             
-            <CardContent className="pt-0 pb-4">
-              {/* Search Bar */}
+            <CardContent className="pt-0 pb-3">
+              {/* Search Bar - Compact */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-300" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-amber-300" />
                 <input
                   type="text"
                   placeholder="Search conversations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-amber-500 text-amber-100 placeholder-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
+                  className="w-full pl-9 pr-3 py-2 bg-gray-700 border border-amber-300 text-white placeholder-gray-300 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-transparent outline-none transition-all duration-200 text-sm"
                 />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Separator className="bg-amber-500/30" />
+        <Separator className="bg-amber-300/30" />
 
         {/* Scrollable Conversation List */}
         <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
-            <div className="p-4">
+            <div className="p-3">
               {filteredConversations.length === 0 ? (
-                <div className="text-center py-12">
-                  <MessageCircle className="w-12 h-12 text-amber-300 mx-auto mb-4 opacity-50" />
-                  <p className="text-amber-300 text-sm">
+                <div className="text-center py-8">
+                  <MessageCircle className="w-10 h-10 text-amber-300 mx-auto mb-3 opacity-50" />
+                  <p className="text-white text-sm">
                     {searchTerm ? 'No conversations match your search' : 'No conversations yet'}
                   </p>
-                  <p className="text-amber-200 text-xs mt-1">
+                  <p className="text-gray-300 text-xs mt-1">
                     {searchTerm ? 'Try a different search term' : 'Start a new conversation to begin!'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {filteredConversations.map((conv) => (
                     <Card
                       key={conv._id}
                       className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
                         currentConversationId === conv._id
-                          ? 'bg-amber-500 border-amber-400 shadow-lg scale-[1.02]'
-                          : 'bg-gray-800 hover:bg-gray-700 border-gray-600 hover:border-amber-500'
+                          ? 'bg-amber-300 border-amber-300 shadow-lg scale-[1.02]'
+                          : 'bg-gray-800 hover:bg-gray-700 border-gray-600 hover:border-amber-300'
                       }`}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <div
                             onClick={() => selectConversation(conv._id)}
                             className="flex-1 min-w-0"
                           >
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                currentConversationId === conv._id ? 'bg-black' : 'bg-amber-500'
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                currentConversationId === conv._id ? 'bg-gray-800' : 'bg-amber-300'
                               }`}>
-                                <MessageCircle className={`w-5 h-5 ${
+                                <MessageCircle className={`w-4 h-4 ${
                                   currentConversationId === conv._id ? 'text-amber-400' : 'text-black'
                                 }`} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className={`font-semibold text-sm ${
-                                  currentConversationId === conv._id ? 'text-black' : 'text-amber-300'
+                                  currentConversationId === conv._id ? 'text-black' : 'text-white'
                                 }`}>
                                   Chat {conv._id.split('-')[1] || 'Session'}
                                 </h3>
                                 <p className={`text-xs ${
-                                  currentConversationId === conv._id ? 'text-gray-700' : 'text-amber-200'
+                                  currentConversationId === conv._id ? 'text-gray-700' : 'text-gray-300'
                                 }`}>
                                   {(conv.updatedAt || conv.createdAt)
                                     ? new Date(conv.updatedAt || conv.createdAt).toLocaleDateString()
@@ -292,7 +298,7 @@ const ChatApp = () => {
                               </div>
                             </div>
                             <p className={`text-sm truncate ${
-                              currentConversationId === conv._id ? 'text-gray-700' : 'text-amber-100'
+                              currentConversationId === conv._id ? 'text-gray-700' : 'text-gray-200'
                             }`}>
                               {conv.lastMessage || 'No messages yet'}
                             </p>
@@ -304,14 +310,14 @@ const ChatApp = () => {
                               e.stopPropagation();
                               deleteConversation(conv._id);
                             }}
-                            className={`h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 ${
+                            className={`h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 ${
                               currentConversationId === conv._id 
                                 ? 'hover:bg-red-600 text-red-700 hover:text-red-100' 
                                 : 'hover:bg-red-600 text-red-400 hover:text-red-100'
                             }`}
                             title="Delete conversation"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </CardContent>
@@ -328,25 +334,36 @@ const ChatApp = () => {
       <div className="flex-1 flex flex-col bg-white">
         {currentConversationId ? (
           <>
-            {/* Enhanced Chat Header */}
+            {/* Enhanced Chat Header - Compact */}
             <div className="flex-shrink-0">
-              <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-gray-800 border-amber-500 shadow-sm">
-                <CardHeader className="py-4">
+              <Card className="rounded-none border-l-0 border-r-0 border-t-0 bg-white border-gray-300 shadow-sm">
+                <CardHeader className="py-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                        <Bot className="w-6 h-6 text-black" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-300 rounded-full flex items-center justify-center shadow-lg">
+                        <Bot className="w-5 h-5 text-black" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-amber-300">
-                          Chat {currentConversationId.split('-')[1] || ''}
+                        <CardTitle className="text-lg text-gray-800">
+                          Unmute
                         </CardTitle>
-                        <p className="text-sm text-amber-200">Powered by AlleAI • Online</p>
+                        <p className="text-xs text-gray-600">Powered by AlleAI • Online</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="bg-green-500/10 border-green-500 text-green-400">
-                      Active
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-green-500/10 border-green-500 text-green-600 h-5 text-xs">
+                        Active
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={deleteCurrentChat}
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                        title="Delete this chat"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -355,31 +372,31 @@ const ChatApp = () => {
             {/* Enhanced Messages Area */}
             <div className="flex-1 min-h-0 bg-gradient-to-b from-gray-50 to-white">
               <ScrollArea className="h-full">
-                <div className="p-6 max-w-4xl mx-auto space-y-6">
+                <div className="p-4 max-w-4xl mx-auto space-y-4">
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex gap-4 ${
+                      className={`flex gap-3 ${
                         message.role === 'user' ? 'justify-end' : 'justify-start'
                       }`}
                     >
                       {message.role === 'ai' && (
-                        <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                          <Bot className="w-5 h-5 text-black" />
+                        <div className="w-8 h-8 bg-amber-300 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <Bot className="w-4 h-4 text-black" />
                         </div>
                       )}
                       <div
-                        className={`max-w-lg px-5 py-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+                        className={`max-w-lg px-4 py-3 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
                           message.role === 'user'
-                            ? 'bg-black text-amber-300 border border-amber-500'
-                            : 'bg-amber-500 text-black border border-amber-600'
+                            ? 'bg-blue-50 text-gray-700'
+                            : 'bg-gray-100 text-gray-700'
                         }`}
                       >
                         <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
                           {message.message}
                         </p>
-                        <p className={`text-xs mt-3 ${
-                          message.role === 'user' ? 'text-amber-200' : 'text-gray-700'
+                        <p className={`text-xs mt-2 ${
+                          message.role === 'user' ? 'text-gray-600' : 'text-gray-600'
                         }`}>
                           {new Date(message.timestamp).toLocaleTimeString([], { 
                             hour: '2-digit', 
@@ -388,22 +405,22 @@ const ChatApp = () => {
                         </p>
                       </div>
                       {message.role === 'user' && (
-                        <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 shadow-lg">
-                          <User className="w-5 h-5 text-amber-400" />
+                        <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-300 shadow-lg">
+                          <User className="w-4 h-4 text-white" />
                         </div>
                       )}
                     </div>
                   ))}
                   {isLoading && (
-                    <div className="flex justify-start gap-4">
-                      <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                        <Bot className="w-5 h-5 text-black" />
+                    <div className="flex justify-start gap-3">
+                      <div className="w-8 h-8 bg-amber-300 rounded-full flex items-center justify-center shadow-lg">
+                        <Bot className="w-4 h-4 text-black" />
                       </div>
-                      <div className="bg-amber-500 px-5 py-4 rounded-2xl shadow-lg border border-amber-600">
-                        <div className="flex space-x-2">
-                          <div className="w-2 h-2 bg-black rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.1s]"></div>
-                          <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      <div className="bg-gray-100 px-4 py-3 rounded-2xl shadow-lg">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                         </div>
                       </div>
                     </div>
@@ -413,19 +430,19 @@ const ChatApp = () => {
               </ScrollArea>
             </div>
 
-            {/* Enhanced Message Input */}
+            {/* Enhanced Message Input - Compact */}
             <div className="flex-shrink-0">
-              <Card className="rounded-none border-l-0 border-r-0 border-b-0 bg-gray-800 border-amber-500">
-                <CardContent className="p-6">
+              <Card className="rounded-none border-l-0 border-r-0 border-b-0 bg-white border-gray-300">
+                <CardContent className="p-4">
                   <form onSubmit={sendMessage} className="max-w-4xl mx-auto">
-                    <div className="flex gap-4 items-end">
+                    <div className="flex gap-3 items-end">
                       <div className="flex-1">
                         <textarea
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           placeholder="Type your message..."
                           rows={1}
-                          className="w-full px-4 py-3 border-2 border-amber-500 bg-white text-black placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition-all duration-200 resize-none shadow-lg min-h-[48px] max-h-[120px]"
+                          className="w-full px-3 py-2 border-2 border-gray-200 bg-gray-50 text-gray-700 placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-300 outline-none transition-all duration-200 resize-none shadow-lg min-h-[35px] max-h-[80px] text-sm"
                           disabled={isLoading}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -438,10 +455,10 @@ const ChatApp = () => {
                       <Button
                         type="submit"
                         disabled={isLoading || !newMessage.trim()}
-                        className="px-6 py-3 bg-amber-500 text-black rounded-xl hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl font-semibold min-h-[48px]"
+                        className="px-4 py-2 bg-amber-300 text-black rounded-lg hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl font-semibold min-h-[35px]"
                         title="Send message"
                       >
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
                       </Button>
                     </div>
                   </form>
@@ -451,20 +468,20 @@ const ChatApp = () => {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
-            <Card className="max-w-md mx-auto bg-white shadow-2xl border-amber-500">
-              <CardContent className="p-8 text-center">
-                <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <MessageCircle className="w-10 h-10 text-black" />
+            <Card className="max-w-md mx-auto bg-white shadow-2xl border-amber-300">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-amber-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <MessageCircle className="w-8 h-8 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to Your Chat</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Welcome to Your Chat</h3>
+                <p className="text-gray-600 mb-4 leading-relaxed text-sm">
                   Start a new conversation or select an existing one to begin chatting with our AI assistant
                 </p>
                 <Button
                   onClick={createNewConversation}
-                  className="bg-amber-500 text-black px-8 py-3 rounded-xl hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold"
+                  className="bg-amber-300 text-black px-6 py-2 rounded-lg hover:bg-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Start New Chat
                 </Button>
               </CardContent>
